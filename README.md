@@ -1,20 +1,3 @@
-# 安装（Windows · w64devkit）
-
-[w64devkit](https://github.com/skeeto/w64devkit) 是一个免安装的 MinGW-w64 工具链，解压就能用。以下步骤全部围绕它。
-
-## 装什么
-
-| 组件 | 放到哪 |
-|---|---|
-| **w64devkit** | 解压到 `C:\w64devkit\` |
-| **raylib** | 头文件和库塞进 w64devkit |
-| **Aurinko CLI** | 编译出的 `aurinko.exe` 塞进 w64devkit |
-| **Aurinko 头文件** | 整个 `aurinko\` 目录塞进 w64devkit |
-
-装完一次性搞定，以后不再动。
-
----
-
 ## 1. 下载 w64devkit
 
 从 <https://github.com/skeeto/w64devkit/releases> 下载最新版 `w64devkit-x.x.x.zip`。
