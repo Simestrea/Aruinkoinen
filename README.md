@@ -1,84 +1,121 @@
-# 安装（Windows）
-Aurinko 由三部分组成，缺一不可：
+# 安装（Windows · w64devkit）
 
-| 组件 | 内容 | 干什么用 |
-|---|---|---|
-| **CLI 工具** | 一个可执行文件 `aurinko.exe` | 生成项目 / 编译 / 打包 |
-| **头文件库** | `aurinko\` 目录（10+ 个 `.hpp`） | 你项目里 `#include <aurinko/...>` 用的 |
-| **raylib** | 第三方库 | 渲染 / 输入 / 音频 |
+[w64devkit](https://github.com/skeeto/w64devkit) 是一个免安装的 MinGW-w64 工具链，解压就能用。以下步骤全部围绕它。
 
-推荐使用 [MSYS2](https://www.msys2.org/) 里的 **MinGW-w64** 工具链。它是 Windows 上跑 g++ + raylib 最省事的方案。
+## 装什么
 
----
+| 组件 | 放到哪 |
+|---|---|
+| **w64devkit** | 解压到 `C:\w64devkit\` |
+| **raylib** | 头文件和库塞进 w64devkit |
+| **Aurinko CLI** | 编译出的 `aurinko.exe` 塞进 w64devkit |
+| **Aurinko 头文件** | 整个 `aurinko\` 目录塞进 w64devkit |
 
-## 1. 装 MSYS2
-
-从 <https://www.msys2.org/> 下载安装包，装到默认位置（比如 `C:\msys64`）。
-
-装完打开 **MSYS2 MinGW 64-bit** 这个快捷方式（**不是** "MSYS2 MSYS"）。之后所有命令都在这个终端里跑。
-
-> **怎么分辨**：提示符应该是 `user@host MINGW64 ~` 而不是 `user@host MSYS ~`。如果是后者，说明开错了终端。
+装完一次性搞定，以后不再动。
 
 ---
 
-## 2. 装 g++ 和 raylib
+## 1. 下载 w64devkit
 
-在 MinGW64 终端里：
+从 <https://github.com/skeeto/w64devkit/releases> 下载最新版 `w64devkit-x.x.x.zip`。
 
-```bash
-pacman -S mingw-w64-x86_64-gcc
-pacman -S mingw-w64-x86_64-raylib
+解压，把整个 `w64devkit\` 文件夹放到 `C:\w64devkit\`。
+
+目录结构：
+
+```
+C:\w64devkit\
+├── bin\          (g++.exe, gcc.exe, ...)
+├── include\      (头文件)
+├── lib\          (库文件)
+├── share\
+└── w64devkit.exe (启动器)
 ```
 
-验证：
+**把 `C:\w64devkit\bin` 加进系统 PATH**：
 
-```bash
-g++ --version
-# 应输出 gcc 13 或更新版本
+1. Win + R → 输入 `sysdm.cpl` → 回车
+2. "高级" 选项卡 → "环境变量"
+3. 系统变量里选中 `Path` → "编辑" → "新建" → 填 `C:\w64devkit\bin`
+4. 全部确定，重启 PowerShell
 
-ls /mingw64/lib/libraylib.a
-# 文件存在说明 raylib 装好了
+验证：开 PowerShell 输入 `g++ --version`，能看到版本号就行。
+
+---
+
+## 2. 装 raylib
+
+从 <https://github.com/raysan5/raylib/releases> 下载最新的 **raylib-x.x.x_win64_mingw-w64.zip**。
+
+解压后里面是：
+
+```
+raylib\
+├── include\
+│   └── raylib.h
+├── lib\
+│   ├── libraylib.a
+│   └── libraylibdll.a
+└── ...
+```
+
+**把对应的文件放进 w64devkit**：
+
+| 从 raylib 里复制 | 放到 |
+|---|---|
+| `raylib\include\raylib.h` | `C:\w64devkit\include\` |
+| `raylib\lib\libraylib.a` | `C:\w64devkit\lib\` |
+
+**注意**：
+
+- 如果 `C:\w64devkit\include\` 里已有 `raylib.h`，覆盖它
+- 只放 `libraylib.a` 就够了，`libraylibdll.a` 是动态库版本，用不到
+- 复制的是**文件本身**，不是整个 `include\` 或 `lib\` 文件夹
+
+完成后：
+
+```
+C:\w64devkit\include\raylib.h
+C:\w64devkit\lib\libraylib.a
 ```
 
 ---
 
-## 3. 编译 CLI 并放到 PATH
+## 3. 编译并安装 Aurinko CLI
 
-在 Aurinko 源码目录（含 `aurinko.cpp` 的目录）：
+在 Aurinko 源码目录（含 `aurinko.cpp`）：
 
 ```bash
 g++ aurinko.cpp -o aurinko.exe -std=c++20
 ```
 
-把它复制到 MinGW64 的 `bin` 目录（这个目录已经在系统 PATH 里）：
+**把 `aurinko.exe` 复制到 `C:\w64devkit\bin\`**。
 
-```bash
-cp aurinko.exe /mingw64/bin/
+完成后：
+
+```
+C:\w64devkit\bin\aurinko.exe
 ```
 
-验证：
+验证：开新 PowerShell，输入：
 
-```bash
+```powershell
 aurinko version
 # 输出：aurinko 0.3.5
 ```
 
-> **另一种做法**：把 `aurinko.exe` 放到任意目录（例如 `D:\tools\`），然后在 Windows 系统设置里把 `D:\tools\` 加进 `PATH`。效果一样。
-
 ---
 
-## 4. 安装头文件库
+## 4. 安装 Aurinko 头文件
 
-把 `aurinko\` 目录（含所有 `.hpp`）复制到 MinGW64 的 include 目录：
+把整个 `aurinko\` 目录（含所有 `.hpp`）**复制到** `C:\w64devkit\include\` 下。
 
-```bash
-cp -r aurinko/ /mingw64/include/aurinko/
-```
+复制的是 `aurinko\` **文件夹本身**，不是里面的文件。
 
-完成后的目录结构：
+完成后：
 
 ```
-C:\msys64\mingw64\include\aurinko\
+C:\w64devkit\include\aurinko\
 ├── character.hpp
 ├── context.hpp
 ├── coroutine.hpp
@@ -99,119 +136,120 @@ C:\msys64\mingw64\include\aurinko\
     └── table.hpp
 ```
 
-`/mingw64/include` 是 g++ 的默认搜索路径之一。装完后，任何项目里写 `#include <aurinko/init.hpp>` 都能找到。
+---
+
+## 5. 目录最终样子
+
+四步做完后，w64devkit 的相关目录应该长这样：
+
+```
+C:\w64devkit\
+├── bin\
+│   ├── g++.exe
+│   ├── gcc.exe
+│   └── aurinko.exe           ← 第 3 步放进来的
+├── include\
+│   ├── raylib.h              ← 第 2 步放进来的
+│   └── aurinko\              ← 第 4 步放进来的
+│       ├── init.hpp
+│       ├── character.hpp
+│       └── ...
+└── lib\
+    └── libraylib.a           ← 第 2 步放进来的
+```
+
+**另外两个必须手动复制的文件**（w64devkit 里的路径不固定，从你实际找到的位置复制）：
+
+- `libwinpthread-1.dll` — 通常在 `w64devkit\bin\` 里已经有了，不用管
+- `libgcc_s_seh-1.dll` / `libstdc++-6.dll` — 通常在 `w64devkit\bin\` 里，不用管
+
+w64devkit 的 DLL 都在 `bin\` 里，编译出的程序依赖它们。如果要把 `game.exe` 拷到别的机器上跑，需要连同这几个 DLL 一起拷。或者用 `-static` 静态链接，就不用带 DLL。
 
 ---
 
-## 5. 验证安装
+## 6. 验证安装
 
-开一个空目录测试：
+开新 PowerShell，找个空目录：
 
-```bash
-mkdir /tmp/aurinko-test
-cd /tmp/aurinko-test
+```powershell
+mkdir $env:TEMP\aurinko-test
+cd $env:TEMP\aurinko-test
+
 aurinko create
-```
+# 画布宽度: 800
+# 画布高度: 450
 
-按提示填画布尺寸（比如 `800` 和 `450`）。如果没报错并生成 `project.txt`、`characters\`、`fonts\`，说明 CLI 装好了。
-
-再试一次完整流程：
-
-```bash
 aurinko create Alice
+# 图片路径: （留空直接回车）
+# 缩放倍数: 2
+# ... 全部默认
+
 aurinko update
 ```
 
-看到 `编译成功 -> game.exe` 就说明 CLI、头文件、raylib 三者全部就位。
-
----
-
-## 卸载
-
-删掉这两个位置的文件即可：
-
-```bash
-rm /mingw64/bin/aurinko.exe
-rm -rf /mingw64/include/aurinko/
-```
-
-g++ 和 raylib 是 pacman 装的，用：
-
-```bash
-pacman -R mingw-w64-x86_64-raylib
-pacman -R mingw-w64-x86_64-gcc
-```
-
-如果不打算再用 MSYS2，直接在"添加或删除程序"里卸载 MSYS2 整个。
+看到 `编译成功 -> game.exe` 就代表全部装好了。
 
 ---
 
 ## 常见问题
 
-**`aurinko: command not found`**
+**`g++: command not found`**
 
-CLI 不在 PATH 里。在 MinGW64 终端里检查：
+PATH 没配好，或没重启终端。Win + R → `sysdm.cpl` 检查系统变量 `Path` 里有没有 `C:\w64devkit\bin`。加完必须**开新终端**才生效。
 
-```bash
-echo $PATH | tr ':' '\n' | grep mingw64
+**`fatal error: raylib.h: No such file or directory`**
+
+raylib.h 没放到正确位置。检查：
+
+```powershell
+dir C:\w64devkit\include\raylib.h
 ```
 
-应该能看到 `/mingw64/bin`。看不到说明你开错了终端（开成了 "MSYS2 MSYS" 而不是 "MSYS2 MinGW 64-bit"），或者你根本没把 `aurinko.exe` 放进 `/mingw64/bin/`。
+文件必须**直接**在 `include\` 下，不是 `include\raylib\raylib.h`。
 
 **`fatal error: aurinko/init.hpp: No such file or directory`**
 
-头文件没装到位。检查文件是否真的在：
+Aurinko 头文件没放对。检查：
 
-```bash
-ls /mingw64/include/aurinko/init.hpp
+```powershell
+dir C:\w64devkit\include\aurinko\init.hpp
 ```
 
-如果文件不存在，重新执行第 4 步的 `cp`。
+必须是 `include\aurinko\init.hpp` 这种两层结构。
 
 **`undefined reference to 'InitWindow'`**
 
-raylib 没装好，或者你用的 g++ 不是 MinGW64 里的那个。检查：
+`libraylib.a` 没放对位置。检查：
 
-```bash
-which g++
-# 应该输出 /mingw64/bin/g++ 之类
+```powershell
+dir C:\w64devkit\lib\libraylib.a
 ```
 
-如果不是，说明你误用了 MSYS2 MSYS 环境里的 g++。
+**`aurinko: command not found`**
 
-**`'coroutine' file not found`**
+`aurinko.exe` 没放进 `C:\w64devkit\bin\`。检查：
 
-g++ 版本太老。检查：
-
-```bash
-g++ --version
+```powershell
+dir C:\w64devkit\bin\aurinko.exe
 ```
-
-如果低于 13，跑：
-
-```bash
-pacman -Syu
-pacman -S mingw-w64-x86_64-gcc
-```
-
-升级到最新。
 
 **双击 `aurinko.exe` 一闪而过**
 
-`aurinko` 是命令行工具，必须在终端里跑：
+它是命令行工具，必须在终端里运行。不要双击。
 
-```bash
-aurinko create
+---
+
+## 卸载
+
+删掉这四个位置的文件：
+
+```
+C:\w64devkit\bin\aurinko.exe
+C:\w64devkit\include\raylib.h
+C:\w64devkit\include\aurinko\
+C:\w64devkit\lib\libraylib.a
 ```
 
-不要双击。在项目目录开一个 MinGW64 终端，或 PowerShell 里 `cd` 到项目目录后执行。PowerShell 里如果直接跑不起来（因为 PATH 没刷新），可以先执行一次 `refreshenv`，或者重启 PowerShell。
+然后从系统 PATH 里移除 `C:\w64devkit\bin`，整个删掉 `C:\w64devkit\` 即可。
 
-**在 PowerShell / CMD 里也能用吗？**
-
-可以。只要 `C:\msys64\mingw64\bin` 加进了系统 PATH（MSYS2 安装时会问是否加），PowerShell 和 CMD 里也能用 `aurinko`。
-
-如果刚装完没生效，重启一下 PowerShell，或运行：
-
-```powershell
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-```
+用户自己的项目目录（`project.txt`、`characters\` 等）不受影响，需要单独删。
