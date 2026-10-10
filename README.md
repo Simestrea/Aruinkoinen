@@ -214,11 +214,7 @@ dir C:\w64devkit\lib\libraylib.a
 
 ```powershell
 dir C:\w64devkit\bin\aurinko.exe
-```
-
-**双击 `aurinko.exe` 一闪而过**
-
-它是命令行工具，必须在终端里运行。不要双击。
+``
 
 ---
 
