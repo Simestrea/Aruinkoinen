@@ -2,7 +2,6 @@
 
 > C++20 + raylib 的 2D 游戏脚手架。用协程写角色剧本，一条命令生成、编译、打包。
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)]()
 [![raylib](https://img.shields.io/badge/raylib-5.x-black.svg)]()
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
