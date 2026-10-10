@@ -1,3 +1,181 @@
+# Aurinko
+
+> C++20 + raylib 的 2D 游戏脚手架。用协程写角色剧本，一条命令生成、编译、打包。
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)]()
+[![raylib](https://img.shields.io/badge/raylib-5.x-black.svg)]()
+[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
+[![Version](https://img.shields.io/badge/version-0.3.5-red.svg)]()
+
+---
+Aurinko 是一个基于 C++20 协程和 raylib 的游戏开发框架。你只需要：
+
+1. 写角色的剧本（一个 `.hpp` 文件）
+2. 跑 `aurinko update`
+3. 得到可发布的游戏
+
+不需要写 `main`，不需要 CMake，不需要手写状态机。
+
+## 特性
+
+- **协程即剧本**。用 `co_await` 线性地写角色行为。
+- **一角色一文件**。每个角色一个 `.hpp`，`update` 时自动扫描、注册。
+- **一条命令构建**。`aurinko update` 完成生成、编译、打包。
+- **虚拟画布**。逻辑分辨率固定，窗口可任意缩放、全屏，画面比例自动保持。
+- **内建 UI 组件**。按钮、输入框、面板、进度条、滑块、折线图、表格。
+- **中文字体支持**。字体池自动预加载 9000+ 常用码点。
+
+## 快速上手
+
+### 依赖
+
+- g++，需 C++20 协程（推荐 [w64devkit](https://github.com/skeeto/w64devkit)）
+- raylib 5.x
+
+### 安装
+
+详细的安装步骤见 [docs/install.md](docs/install.md)。简版：
+
+1. 把 raylib 的 `raylib.h` 和 `libraylib.a` 放进 w64devkit 的 `include/` 和 `lib/`
+2. 编译 CLI：`g++ aurinko.cpp -o aurinko.exe -std=c++20`
+3. 把 `aurinko.exe` 放进 w64devkit 的 `bin/`
+4. 把 `aurinko/` 目录放进 w64devkit 的 `include/`
+
+### 使用
+
+```bash
+# 创建项目
+aurinko create
+
+# 创建角色
+aurinko create Alice
+
+# 编辑 characters/Alice/Alice.hpp
+# 编译
+aurinko update
+
+# 运行
+release/game.exe
+```
+
+### 一个完整角色脚本
+
+```cpp
+#pragma once
+#include <aurinko/character.hpp>
+#include <aurinko/coroutine.hpp>
+#include <aurinko/scene.hpp>
+#include <aurinko/text.hpp>
+#include <aurinko/context.hpp>
+#include "globals.hpp"
+
+inline aur::Task AliceFun(aur::Character& c, aur::Context& ctx) {
+    c.Say("Hello", 1.5f);
+    co_await aur::WaitFor{ 1.5f };
+
+    while (true) {
+        if (IsKeyDown(KEY_D)) c.ChangeX( 200 * GetFrameTime());
+        if (IsKeyDown(KEY_A)) c.ChangeX(-200 * GetFrameTime());
+        c.BounceOffEdge(ctx.screen.GetVirtualWidth(),
+                        ctx.screen.GetVirtualHeight());
+        co_await aur::WaitNextFrame{};
+    }
+}
+```
+
+把这段放进 `characters/Alice/Alice.hpp`，跑 `aurinko update`，角色就能动。
+
+## 核心概念
+
+| 概念 | 说明 |
+|---|---|
+| **Character** | 一个角色：精灵图、动画、运动、碰撞、剧本 |
+| **Scene** | 场景组。只有当前场景的角色才更新和绘制 |
+| **Task / Clone** | 协程返回类型。`Task` 自动运行，`Clone` 需手动 `Spawn` |
+| **Context** | 脚本访问引擎资源的唯一入口（`ctx.scene` / `ctx.screen` / `ctx.fonts` / ...） |
+
+## 命令行
+
+```
+aurinko create                  创建新项目
+aurinko create <角色名>         创建新角色
+aurinko addfont <路径> [名字]   导入字体到 fonts/
+aurinko update [参数...]        生成并编译
+aurinko version                 显示版本号
+```
+
+`aurinko update` 支持：
+- `-d` / `--debug` — debug 编译
+- `-l` / `-I` / `-D` — 追加编译参数
+
+或者把参数写在 `build.txt` 里，每行一条。
+
+## 项目结构
+
+```
+your-project/
+├── project.txt           画布尺寸
+├── build.txt             附加编译参数
+├── globals.hpp           全局变量
+├── index.cpp             自动生成，别手改
+├── characters/
+│   └── Alice/
+│       ├── Alice.hpp     剧本
+│       ├── Alice.png     精灵图
+│       └── config.txt    角色配置
+├── fonts/
+│   └── msyh.ttc
+└── release/              可发布的目录
+    ├── game.exe
+    ├── characters/
+    └── fonts/
+```
+
+## 库结构
+
+```
+aurinko/
+├── init.hpp              虚拟画布 + 窗口
+├── character.hpp         角色 + 纹理池
+├── scene.hpp             场景管理
+├── coroutine.hpp         协程调度
+├── context.hpp           脚本依赖包
+├── text.hpp              文字 + 字体池
+├── textbox.hpp           输入框
+├── button.hpp            按钮
+├── ui_root.hpp           UI 容器
+├── panel.hpp             面板
+├── progress_bar.hpp      进度条
+├── draw.hpp              绘制原语
+├── input.hpp             输入查询
+└── extras/
+    ├── plot.hpp          折线图
+    ├── slider.hpp        滑块
+    └── table.hpp         表格
+```
+
+## 文档
+
+- [安装指南](docs/install.md)
+- [API 参考](docs/api.md)
+
+## 平台支持
+
+| 平台 | 状态 |
+|---|---|
+| Windows (w64devkit) | ✅ 主要支持 |
+| Linux | 🚧 部分支持 |
+| macOS | ❌ 未测试 |
+
+## 许可
+
+[MIT](LICENSE)
+
+---
+
+*© 2026 Aurinko · C++20 · raylib*
+
 ## 1. 下载 w64devkit
 
 从 <https://github.com/skeeto/w64devkit/releases> 下载最新版 `w64devkit-x.x.x.zip`。
